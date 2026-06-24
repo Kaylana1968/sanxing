@@ -1,8 +1,8 @@
 import { createContext, useContext } from "react";
-import type { Data, Screen } from "./types";
+import type { Data } from "./types";
 
 export const AppContext = createContext<{
-	navigate: (screen: Screen) => void;
+	socketRef: React.RefObject<WebSocket | null>;
 	sendData: (data: Data) => void;
 } | null>(null);
 

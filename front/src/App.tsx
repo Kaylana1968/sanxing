@@ -1,28 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Game from "./pages/Game";
 import Home from "./pages/Home";
 import { AppContext } from "./AppContext";
-import type { Data, Screen } from "./types";
+import type { Data } from "./types";
+import { Route, Switch, useLocation } from "wouter";
 
 function App() {
-	const [screen, setScreen] = useState<Screen>("home");
+	const [location, navigate] = useLocation();
 	const socketRef = useRef<WebSocket>(null);
 
-	function navigate(screen: Screen) {
-		setScreen(screen);
-	}
-
 	useEffect(() => {
-		const socket = new WebSocket("ws://localhost:8000");
-		socketRef.current = socket;
+		socketRef.current = new WebSocket("ws://localhost:8000");
 
-		socket.onopen = () => console.log("connected");
-		socket.onmessage = e => {
+		socketRef.current.onmessage = e => {
 			const data: Data = JSON.parse(e.data);
 
 			switch (data.action) {
-				case "join-room":
-					navigate("game");
+				case "create-success":
+					navigate(`/game/${data.payload.code}`);
 					return;
 
 				default:
@@ -31,9 +26,9 @@ function App() {
 		};
 
 		return () => {
-			socket!.close();
+			socketRef.current!.close();
 		};
-	}, []);
+	}, [navigate]);
 
 	function sendData(data: Data) {
 		if (!socketRef.current) {
@@ -44,10 +39,22 @@ function App() {
 		socketRef.current.send(JSON.stringify(data));
 	}
 
+	console.log(location);
+
 	return (
-		<AppContext.Provider value={{ navigate, sendData }}>
+		<AppContext.Provider value={{ socketRef, sendData }}>
 			<main className="">
-				{screen === "game" ? <Game /> : screen === "home" && <Home />}
+				<Switch>
+					<Route path="/">
+						<Home />
+					</Route>
+
+					<Route path="/game/:code">{({ code }) => <Game code={code} />}</Route>
+
+					<Route>
+						<div>T'es allé où ?</div>
+					</Route>
+				</Switch>
 			</main>
 		</AppContext.Provider>
 	);

@@ -6,6 +6,8 @@
 		"lib": ["ES6"],
 
 		/* Strictness & Quality Checks */
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
 		"strict": true,
 		"noImplicitAny": true,
 		"strictNullChecks": true,
