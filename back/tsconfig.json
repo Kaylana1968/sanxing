@@ -3,8 +3,14 @@
 		"target": "es6",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
-		"lib": ["ES6"],
-
+		"lib": [
+			"ES6"
+		],
+		"paths": {
+			"@shared/*": [
+				"../shared/*"
+			]
+		},
 		/* Strictness & Quality Checks */
 		"allowImportingTsExtensions": true,
 		"noEmit": true,
@@ -14,16 +20,19 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitReturns": true,
-
 		/* Advanced Configuration */
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-
 		/* Output Management */
 		"outDir": "./dist",
 		"rootDir": "./"
 	},
-	"include": ["**/*.ts"],
-	"exclude": ["node_modules", "dist"]
+	"include": [
+		"**/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
 }

@@ -1,34 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Game from "./pages/Game";
 import Home from "./pages/Home";
 import { AppContext } from "./AppContext";
 import type { Data } from "./types";
-import { Route, Switch, useLocation } from "wouter";
+import { Route, Switch } from "wouter";
 
 function App() {
-	const [location, navigate] = useLocation();
 	const socketRef = useRef<WebSocket>(null);
-
-	useEffect(() => {
-		socketRef.current = new WebSocket("ws://localhost:8000");
-
-		socketRef.current.onmessage = (e) => {
-			const data: Data = JSON.parse(e.data);
-
-			switch (data.action) {
-				case "create-success":
-					navigate(`/game/${data.payload.code}`);
-					return;
-
-				default:
-					return;
-			}
-		};
-
-		return () => {
-			socketRef.current!.close();
-		};
-	}, [navigate]);
 
 	function sendData(data: Data) {
 		if (!socketRef.current) {
@@ -38,8 +16,6 @@ function App() {
 
 		socketRef.current.send(JSON.stringify(data));
 	}
-
-	console.log(location);
 
 	return (
 		<AppContext.Provider value={{ socketRef, sendData }}>

@@ -6,21 +6,32 @@ export default function Game({ code }: { code: string }) {
 	const { socketRef, sendData } = useAppContext();
 
 	useEffect(() => {
-		if (!socketRef.current) return;
+		if (!socketRef.current)
+			socketRef.current = new WebSocket("ws://localhost:8000");
 
-		socketRef.current.onmessage = (e) => {
-			const data: Data = JSON.parse(e.data);
+		if (socketRef.current.readyState === WebSocket.OPEN) {
+			sendData({ action: "game-state", payload: null });
+		}
 
-			switch (data.action) {
-				case "game-state":
-					console.log(data.payload);
+		function handleMessage(e: MessageEvent) {
+			const { action, payload }: Data = JSON.parse(e.data);
+
+			switch (action) {
+				case "game-state-success":
+					console.log(payload);
 					return;
 
 				default:
 					return;
 			}
+		}
+
+		socketRef.current.addEventListener("message", handleMessage);
+
+		return () => {
+			socketRef.current?.removeEventListener("message", handleMessage);
 		};
-	}, [code, sendData, socketRef]);
+	}, [sendData, socketRef]);
 
 	return (
 		<div className="bg-red-500 size-20">
