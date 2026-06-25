@@ -12,7 +12,7 @@ function App() {
 	useEffect(() => {
 		socketRef.current = new WebSocket("ws://localhost:8000");
 
-		socketRef.current.onmessage = e => {
+		socketRef.current.onmessage = (e) => {
 			const data: Data = JSON.parse(e.data);
 
 			switch (data.action) {
@@ -43,7 +43,7 @@ function App() {
 
 	return (
 		<AppContext.Provider value={{ socketRef, sendData }}>
-			<main className="">
+			<main className="text-sm">
 				<Switch>
 					<Route path="/">
 						<Home />

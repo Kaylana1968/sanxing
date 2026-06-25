@@ -8,9 +8,7 @@ export default function Game({ code }: { code: string }) {
 	useEffect(() => {
 		if (!socketRef.current) return;
 
-		sendData({ action: "join-lobby", payload: { username: "Test", code } });
-
-		socketRef.current.onmessage = e => {
+		socketRef.current.onmessage = (e) => {
 			const data: Data = JSON.parse(e.data);
 
 			switch (data.action) {

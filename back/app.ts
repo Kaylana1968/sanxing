@@ -12,7 +12,7 @@ const server = http.createServer((_req, res) => {
 const wss = new WebSocketServer({ server });
 
 function sendAll(data: Data) {
-	wss.clients.forEach(client => client.send(JSON.stringify(data)));
+	wss.clients.forEach((client) => client.send(JSON.stringify(data)));
 }
 
 function send(client: WebSocket, data: Data) {
@@ -21,9 +21,9 @@ function send(client: WebSocket, data: Data) {
 
 const gameRooms = new Map<string, GameState>();
 
-wss.on("connection", ws => {
+wss.on("connection", (ws) => {
 	console.log("Player connected	");
-	ws.on("message", message => {
+	ws.on("message", (message) => {
 		try {
 			const data: Data = JSON.parse(message.toString());
 
@@ -31,7 +31,9 @@ wss.on("connection", ws => {
 			switch (data.action) {
 				case "create-lobby":
 					dataToSend = createLobby(gameRooms, data.payload);
-					console.log(gameRooms.get(data.payload.code));
+					console.log(
+						gameRooms.get((dataToSend.data.payload as { code: string }).code)
+					);
 
 					break;
 				case "join-lobby":

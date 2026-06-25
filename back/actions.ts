@@ -1,20 +1,16 @@
 import type { ActionResponse, GameState } from "./types.ts";
+import { getRandomString } from "./utils.ts";
 
 export function createLobby(
 	gameRooms: Map<string, GameState>,
-	payload: { username: string; code: string }
+	payload: { username: string }
 ): ActionResponse {
-	const { username, code } = payload;
-	const existingRoom = gameRooms.get(code);
+	const { username } = payload;
 
-	if (existingRoom)
-		return {
-			data: {
-				action: "error",
-				payload: { message: "Une partie avec ce code existe déjà" }
-			},
-			target: "sender"
-		};
+	let code: string;
+	do {
+		code = getRandomString();
+	} while (gameRooms.has(code));
 
 	gameRooms.set(code, { players: [{ username }], teams: [] });
 
