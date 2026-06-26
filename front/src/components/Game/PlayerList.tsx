@@ -5,7 +5,7 @@ export default function PlayerList({ players }: { players: Player[] }) {
 		<div className="grid grid-cols-2">
 			{players.map((player) => (
 				<div
-					key={player.id}
+					key={player.username}
 					className="odd:border-r not-last:not-nth-last-2:border-b border-slate-300 p-1 flex gap-2 items-center"
 				>
 					<svg

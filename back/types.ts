@@ -20,10 +20,13 @@ export type Data =
 	| { action: "game-state-failure"; payload: { message: string } }
 	| { action: "play"; payload: unknown };
 
-export type Player = { client: WebSocket } & ClientPlayer;
-export type ClientPlayer = { id: number; username: string };
+export type CardColor = "spades" | "hearts" | "diamonds" | "clubs";
+export type Card = { value: number; color: CardColor };
+export type Player = { client: WebSocket; cards: Card[] } & ClientPlayer;
+export type ClientPlayer = { username: string; cards?: Card[] };
 
 export type GameState = {
+	code: string;
 	players: Player[];
 	teams: [];
 };

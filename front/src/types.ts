@@ -18,7 +18,9 @@ export type Data =
 	| { action: "game-state-success"; payload: { gameState: GameState } }
 	| { action: "play"; payload: unknown };
 
-export type Player = { id: number; username: string };
+export type CardColor = "spades" | "hearts" | "diamonds" | "clubs";
+export type Card = { value: number; color: CardColor };
+export type Player = { username: string; cards?: Card[] };
 
 export type GameState = {
 	players: Player[];
