@@ -1,7 +1,8 @@
 import http from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import type { Data, GameState } from "./types.ts";
-import { formatGameState } from "./utils.ts";
+import type { Data } from "./types.ts";
+import { Game } from "./classes/Game.ts";
+import { Player } from "./classes/Player.ts";
 
 const PORT = 8000;
 
@@ -12,16 +13,14 @@ const server = http.createServer((_req, res) => {
 const wss = new WebSocketServer({ server });
 
 function sendLobby(client: WebSocket, data: Data, clientData?: Data) {
-	const gameState = clientToLobby.get(client)!;
+	const game = clientToLobby.get(client)!;
 	const jsonData = JSON.stringify(data);
+	const jsonClientData = JSON.stringify(clientData);
 
-	gameState.players.forEach((p) =>
-		clientData
-			? p.client === client
-				? p.client.send(JSON.stringify(clientData))
-				: p.client.send(jsonData)
-			: p.client.send(jsonData)
-	);
+	game.getPlayers().forEach(p => {
+		if (clientData && p.webSocket === client) p.webSocket.send(jsonClientData);
+		else p.webSocket.send(jsonData);
+	});
 
 	console.log("send lobby", data.action, data.payload);
 }
@@ -32,11 +31,11 @@ function send(client: WebSocket, data: Data) {
 	console.log("send", data.action, data.payload);
 }
 
-const clientToLobby = new Map<WebSocket, GameState>();
-const gameLobbies = new Map<string, GameState>();
+const clientToLobby = new Map<WebSocket, Game>();
+const gameLobbies = new Map<string, Game>();
 
-wss.on("connection", (client) => {
-	client.on("message", (message) => {
+wss.on("connection", client => {
+	client.on("message", message => {
 		try {
 			const { action, payload }: Data = JSON.parse(message.toString());
 
@@ -76,13 +75,13 @@ wss.on("connection", (client) => {
 	});
 
 	client.on("close", () => {
-		const gameState = removeFromGames(client);
+		const game = removeFromGames(client);
 
-		if (!gameState) return;
+		if (!game) return;
 
 		sendLobby(client, {
 			action: "game-state-success",
-			payload: { gameState }
+			payload: { gameState: game.toOtherClientGameState() }
 		});
 
 		clientToLobby.delete(client);
@@ -100,10 +99,10 @@ function createLobby(client: WebSocket, payload: { code: string }) {
 		return;
 	}
 
-	const gameState: GameState = { code, players: [], teams: [] };
+	const game = new Game(code);
 
-	gameLobbies.set(code, gameState);
-	clientToLobby.set(client, gameState);
+	gameLobbies.set(code, game);
+	clientToLobby.set(client, game);
 
 	send(client, {
 		action: "create-lobby-success",
@@ -117,8 +116,8 @@ function joinLobby(
 ) {
 	const { code, username } = payload;
 
-	const gameState = gameLobbies.get(code);
-	if (!gameState) {
+	const game = gameLobbies.get(code);
+	if (!game) {
 		send(client, {
 			action: "join-lobby-failure",
 			payload: { message: "La partie n'existe pas" }
@@ -126,23 +125,23 @@ function joinLobby(
 		return;
 	}
 
-	gameState.players.push({ client, username, cards: [] });
-	clientToLobby.set(client, gameState);
+	game.addPlayer(new Player(client, username));
+	clientToLobby.set(client, game);
 
 	sendLobby(client, {
 		action: "join-lobby-success",
-		payload: { gameState }
+		payload: { gameState: game.toOtherClientGameState() }
 	});
 }
 
 function exitLobby(client: WebSocket) {
-	const gameState = removeFromGames(client);
+	const game = removeFromGames(client);
 
-	if (!gameState) return;
+	if (!game) return;
 
 	sendLobby(client, {
 		action: "exit-lobby-success",
-		payload: { gameState }
+		payload: { gameState: game.toOtherClientGameState() }
 	});
 }
 
@@ -156,8 +155,8 @@ function checkLobby(client: WebSocket, payload: { code: string }) {
 }
 
 function gameState(client: WebSocket) {
-	const gameState = clientToLobby.get(client);
-	if (!gameState) {
+	const game = clientToLobby.get(client);
+	if (!game) {
 		send(client, {
 			action: "game-state-failure",
 			payload: { message: "Vous n'êtes pas dans une partie" }
@@ -167,25 +166,23 @@ function gameState(client: WebSocket) {
 	}
 	send(client, {
 		action: "game-state-success",
-		payload: { gameState: formatGameState(gameState) }
+		payload: { gameState: game.toSelfClientGameState() }
 	});
 }
 
 function removeFromGames(client: WebSocket) {
-	const gameState = clientToLobby.get(client);
+	const game = clientToLobby.get(client);
 
-	if (!gameState) return;
+	if (!game) return;
 
-	gameState.players.splice(
-		gameState.players.findIndex((p) => p.client === client)
-	);
+	game.removePlayer(client);
 
-	if (gameState.players.length === 0) {
-		gameLobbies.delete(gameState.code);
+	if (game.isEmpty()) {
+		gameLobbies.delete(game.code);
 		return;
 	}
 
-	return gameState;
+	return game;
 }
 
 server.listen(PORT);

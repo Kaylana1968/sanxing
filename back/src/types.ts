@@ -1,5 +1,3 @@
-import { WebSocket } from "ws";
-
 export type Data =
 	| { action: "error"; payload: { message: string } }
 	| { action: "create-lobby"; payload: { code: string } }
@@ -11,7 +9,7 @@ export type Data =
 			payload: { code: string; exists: boolean };
 	  }
 	| { action: "join-lobby"; payload: { username: string; code: string } }
-	| { action: "join-lobby-success"; payload: { gameState: GameState } }
+	| { action: "join-lobby-success"; payload: { gameState: ClientGameState } }
 	| { action: "join-lobby-failure"; payload: { message: string } }
 	| { action: "exit-lobby"; payload: null }
 	| { action: "exit-lobby-success"; payload: { gameState: ClientGameState } }
@@ -22,15 +20,19 @@ export type Data =
 
 export type CardColor = "spades" | "hearts" | "diamonds" | "clubs";
 export type Card = { value: number; color: CardColor };
-export type Player = { client: WebSocket; cards: Card[] } & ClientPlayer;
-export type ClientPlayer = { username: string; cards?: Card[] };
 
-export type GameState = {
+export type ClientSelfPlayer = { username: string; cards: Card[] };
+export type ClientOtherPlayer = { username: string };
+export type ClientPlayer = ClientSelfPlayer | ClientOtherPlayer;
+
+export type ClientSelfGameState = {
 	code: string;
-	players: Player[];
+	players: ClientSelfPlayer[];
 	teams: [];
 };
-export type ClientGameState = {
-	players: ClientPlayer[];
+export type ClientOtherGameState = {
+	code: string;
+	players: ClientOtherPlayer[];
 	teams: [];
 };
+export type ClientGameState = ClientSelfGameState | ClientOtherGameState;
