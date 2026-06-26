@@ -3,13 +3,13 @@ import { useAppContext } from "../context/AppContext";
 import type { GameState, Data } from "../types";
 import PlayerList from "../components/Game/PlayerList";
 import Title from "../components/Game/Title";
-import { localUsernameKey } from "../utils";
+import { getNewWebsocket } from "../utils";
 import { useLocation } from "wouter";
 
 export default function Game({ code }: { code: string }) {
 	const [, navigate] = useLocation();
 
-	const { socketRef, sendData, setSnackbarMessage } = useAppContext();
+	const { socketRef, username, sendData, setSnackbarMessage } = useAppContext();
 	const hasJoinedRef = useRef(false);
 	const [gameState, setGameState] = useState<GameState>({
 		players: [],
@@ -19,25 +19,21 @@ export default function Game({ code }: { code: string }) {
 	const joinLobby = useCallback(() => {
 		if (hasJoinedRef.current) return;
 
-		const username = localStorage.getItem(localUsernameKey)!;
-
 		hasJoinedRef.current = true;
 		sendData({
 			action: "join-lobby",
 			payload: { username, code }
 		});
-	}, [sendData, code]);
+	}, [sendData, username, code]);
 
 	useEffect(() => {
-		const storedUsername = localStorage.getItem(localUsernameKey);
-		if (!storedUsername) {
+		if (!username) {
 			navigate(`/?code=${code}`, { replace: true });
 
 			return;
 		}
 
-		if (!socketRef.current)
-			socketRef.current = new WebSocket("ws://localhost:8000");
+		if (!socketRef.current) socketRef.current = getNewWebsocket();
 
 		const socket = socketRef.current;
 
@@ -70,7 +66,7 @@ export default function Game({ code }: { code: string }) {
 			socket.removeEventListener("open", joinLobby);
 			socket.removeEventListener("message", handleMessage);
 		};
-	}, [navigate, setSnackbarMessage, joinLobby, socketRef, code]);
+	}, [navigate, username, setSnackbarMessage, joinLobby, socketRef, code]);
 
 	return (
 		<div className="flex justify-center">

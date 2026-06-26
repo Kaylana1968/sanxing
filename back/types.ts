@@ -2,8 +2,9 @@ import { WebSocket } from "ws";
 
 export type Data =
 	| { action: "error"; payload: { message: string } }
-	| { action: "create-lobby"; payload: null }
+	| { action: "create-lobby"; payload: { code: string } }
 	| { action: "create-lobby-success"; payload: { code: string } }
+	| { action: "create-lobby-failure"; payload: { message: string } }
 	| { action: "check-lobby"; payload: { code: string } }
 	| {
 			action: "check-lobby-success";

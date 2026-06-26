@@ -1,22 +1,20 @@
 import { useEffect, useState } from "react";
-import { useAppContext } from "../context/AppContext";
 import { useLocation, useSearchParams } from "wouter";
+import { useAppContext } from "../context/AppContext";
 import type { Data } from "../types";
-import { localUsernameKey } from "../utils";
+import { getNewWebsocket, localUsernameKey } from "../utils";
 
 export default function Home() {
 	const [, navigate] = useLocation();
 	const [searchParams] = useSearchParams();
 
-	const { socketRef, sendData } = useAppContext();
+	const { socketRef, username, setUsername, sendData } = useAppContext();
 
-	const [username, setUsername] = useState("");
 	const [code, setCode] = useState(searchParams.get("code") ?? "");
 	const [error, setError] = useState("");
 
 	useEffect(() => {
-		if (!socketRef.current)
-			socketRef.current = new WebSocket("ws://localhost:8000");
+		if (!socketRef.current) socketRef.current = getNewWebsocket();
 
 		const socket = socketRef.current;
 
@@ -26,6 +24,10 @@ export default function Home() {
 			switch (action) {
 				case "create-lobby-success":
 					navigate(`/game/${payload.code}`);
+					break;
+
+				case "create-lobby-failure":
+					setError("Une partie avec ce code existe déjà");
 					break;
 
 				case "check-lobby-success":
@@ -45,33 +47,29 @@ export default function Home() {
 		};
 	}, [socketRef, navigate]);
 
-	function createLobby(e: React.MouseEvent) {
-		e.preventDefault();
-
+	function validateFields() {
 		if (!username) {
 			setError("Vous avez oublié votre nom !");
-			return;
-		}
-		localStorage.setItem(localUsernameKey, username);
-
-		sendData({ action: "create-lobby", payload: null });
-	}
-
-	function goToLobby(e: React.MouseEvent) {
-		e.preventDefault();
-
-		if (!username) {
-			setError("Vous avez oublié votre nom !");
-			return;
+			return false;
 		}
 		localStorage.setItem(localUsernameKey, username);
 
 		if (!code) {
 			setError("Vous avez oublié le code !");
-			return;
+			return false;
 		}
 
-		sendData({ action: "check-lobby", payload: { code } });
+		return true;
+	}
+
+	function handleClick(action: "create-lobby" | "check-lobby") {
+		return (e: React.MouseEvent) => {
+			e.preventDefault();
+
+			if (!validateFields()) return;
+
+			sendData({ action, payload: { code } });
+		};
 	}
 
 	return (
@@ -101,7 +99,7 @@ export default function Home() {
 
 				<button
 					type="button"
-					onClick={createLobby}
+					onClick={handleClick("create-lobby")}
 					className="rounded-md mt-2 col-span-2 bg-amber-600 text-white text-base px-4 py-2 cursor-pointer shadow-lg"
 				>
 					Créer une partie
@@ -109,7 +107,7 @@ export default function Home() {
 
 				<button
 					type="button"
-					onClick={goToLobby}
+					onClick={handleClick("check-lobby")}
 					className="rounded-md col-span-2 bg-emerald-600 text-white text-base px-4 py-2 cursor-pointer shadow-lg"
 				>
 					Rejoindre avec un code

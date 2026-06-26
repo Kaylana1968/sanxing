@@ -3,6 +3,8 @@ import type { Data } from "../types";
 
 export const AppContext = createContext<{
 	socketRef: React.RefObject<WebSocket | null>;
+	username: string;
+	setUsername: React.Dispatch<React.SetStateAction<string>>;
 	sendData: (data: Data) => void;
 	setSnackbarMessage: React.Dispatch<React.SetStateAction<string>>;
 } | null>(null);

@@ -1,7 +1,7 @@
 import http from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import type { Data, GameState } from "./types.ts";
-import { formatGameState, getNewGame } from "./utils.ts";
+import { formatGameState } from "./utils.ts";
 
 const PORT = 8000;
 
@@ -15,6 +15,7 @@ function sendLobby(client: WebSocket, data: Data) {
 	gameLobbies
 		.get(clientToLobby.get(client)!)!
 		.players.forEach(({ client }) => client.send(JSON.stringify(data)));
+
 	console.log("send lobby", data.action, data.payload);
 }
 
@@ -37,7 +38,7 @@ wss.on("connection", (client) => {
 
 			switch (action) {
 				case "create-lobby":
-					createLobby(client);
+					createLobby(client, payload);
 					break;
 
 				case "join-lobby":
@@ -82,8 +83,19 @@ wss.on("connection", (client) => {
 	});
 });
 
-function createLobby(client: WebSocket) {
-	const { code, game } = getNewGame(gameLobbies);
+function createLobby(client: WebSocket, payload: { code: string }) {
+	const { code } = payload;
+
+	if (gameLobbies.has(code)) {
+		send(client, {
+			action: "create-lobby-failure",
+			payload: { message: "Le code est déjà pris" }
+		});
+		return;
+	}
+
+	const game: GameState = { players: [], teams: [] };
+
 	gameLobbies.set(code, game);
 	clientToLobby.set(client, code);
 
