@@ -1,9 +1,4 @@
-import type {
-	ClientGameState,
-	ClientPlayer,
-	GameState,
-	Player
-} from "./types.ts";
+import type { ClientGameState, ClientPlayer, GameState } from "./types.ts";
 
 const characters =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -17,10 +12,7 @@ function getRandomString(length = 4) {
 	return result;
 }
 
-export function getNewGame(
-	player: Player,
-	gameRooms: Map<string, GameState>
-): {
+export function getNewGame(gameRooms: Map<string, GameState>): {
 	code: string;
 	game: GameState;
 } {
@@ -29,12 +21,13 @@ export function getNewGame(
 		code = getRandomString();
 	} while (gameRooms.has(code));
 
-	return { code, game: { players: [player], teams: [] } };
+	return { code, game: { players: [], teams: [] } };
 }
 
 export function formatGameState(gameState: GameState): ClientGameState {
 	return {
 		players: gameState.players.map<ClientPlayer>((p) => ({
+			id: p.id,
 			username: p.username
 		})),
 		teams: gameState.teams

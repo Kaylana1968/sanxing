@@ -1,9 +1,10 @@
 import { createContext, useContext } from "react";
-import type { Data } from "./types";
+import type { Data } from "../types";
 
 export const AppContext = createContext<{
 	socketRef: React.RefObject<WebSocket | null>;
 	sendData: (data: Data) => void;
+	setSnackbarMessage: React.Dispatch<React.SetStateAction<string>>;
 } | null>(null);
 
 export function useAppContext() {

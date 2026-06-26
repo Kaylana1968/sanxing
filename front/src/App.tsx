@@ -1,25 +1,12 @@
-import { useRef } from "react";
 import Game from "./pages/Game";
 import Home from "./pages/Home";
-import { AppContext } from "./AppContext";
-import type { Data } from "./types";
+import { AppContextProvider } from "./context/AppContextProvider";
 import { Route, Switch } from "wouter";
 
 function App() {
-	const socketRef = useRef<WebSocket>(null);
-
-	function sendData(data: Data) {
-		if (!socketRef.current) {
-			// Add some error handling
-			return;
-		}
-
-		socketRef.current.send(JSON.stringify(data));
-	}
-
 	return (
-		<AppContext.Provider value={{ socketRef, sendData }}>
-			<main className="text-sm">
+		<AppContextProvider>
+			<main className="text-sm p-2 h-screen">
 				<Switch>
 					<Route path="/">
 						<Home />
@@ -32,7 +19,7 @@ function App() {
 					</Route>
 				</Switch>
 			</main>
-		</AppContext.Provider>
+		</AppContextProvider>
 	);
 }
 
