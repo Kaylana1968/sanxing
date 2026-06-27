@@ -5,6 +5,8 @@ import PlayerList from "../components/Game/PlayerList";
 import Title from "../components/Game/Title";
 import { getNewGameState, getNewWebsocket } from "../utils";
 import { useLocation } from "wouter";
+import StartButton from "../components/Game/StartButton";
+import TeamList from "../components/Game/TeamList";
 
 export default function Game({ code }: { code: string }) {
 	const [, navigate] = useLocation();
@@ -41,10 +43,13 @@ export default function Game({ code }: { code: string }) {
 			const { action, payload }: Data = JSON.parse(e.data);
 
 			switch (action) {
-				case "join-lobby-success":
-				case "exit-lobby-success":
-				case "game-state-success":
+				case "game-state":
 					setGameState(payload.gameState);
+					console.log(payload.gameState);
+					break;
+
+				case "start-game-failure":
+					setSnackbarMessage(payload.message);
 					break;
 
 				case "join-lobby-failure":
@@ -70,6 +75,8 @@ export default function Game({ code }: { code: string }) {
 			<div className="bg-slate-200 w-full rounded-2xl border border-slate-300">
 				<Title code={code} />
 				<PlayerList players={gameState.players} />
+				<TeamList teams={gameState.teams} />
+				<StartButton />
 			</div>
 		</div>
 	);

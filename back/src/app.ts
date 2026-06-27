@@ -12,19 +12,6 @@ const server = http.createServer((_req, res) => {
 });
 const wss = new WebSocketServer({ server });
 
-function sendLobby(client: WebSocket, data: Data, clientData?: Data) {
-	const game = clientToLobby.get(client)!;
-	const jsonData = JSON.stringify(data);
-	const jsonClientData = JSON.stringify(clientData);
-
-	game.getPlayers().forEach(p => {
-		if (clientData && p.webSocket === client) p.webSocket.send(jsonClientData);
-		else p.webSocket.send(jsonData);
-	});
-
-	console.log("send lobby", data.action, data.payload);
-}
-
 function send(client: WebSocket, data: Data) {
 	client.send(JSON.stringify(data));
 
@@ -58,8 +45,12 @@ wss.on("connection", client => {
 					checkLobby(client, payload);
 					break;
 
-				case "game-state":
-					gameState(client);
+				case "join-team":
+					joinTeam(client, payload);
+					break;
+
+				case "start-game":
+					startGame(client);
 					break;
 
 				default:
@@ -79,10 +70,7 @@ wss.on("connection", client => {
 
 		if (!game) return;
 
-		sendLobby(client, {
-			action: "game-state-success",
-			payload: { gameState: game.toClientGameState() }
-		});
+		game.sendGameState();
 
 		clientToLobby.delete(client);
 	});
@@ -128,10 +116,7 @@ function joinLobby(
 	game.addPlayer(new Player(client, username));
 	clientToLobby.set(client, game);
 
-	sendLobby(client, {
-		action: "join-lobby-success",
-		payload: { gameState: game.toClientGameState() }
-	});
+	game.sendGameState();
 }
 
 function exitLobby(client: WebSocket) {
@@ -139,10 +124,49 @@ function exitLobby(client: WebSocket) {
 
 	if (!game) return;
 
-	sendLobby(client, {
-		action: "exit-lobby-success",
-		payload: { gameState: game.toClientGameState() }
-	});
+	game.sendGameState();
+}
+
+function joinTeam(client: WebSocket, payload: { teamId: number }) {
+	const game = clientToLobby.get(client);
+
+	if (!game) return;
+
+	const { teamId } = payload;
+	const team = game.getTeamById(teamId);
+	if (!team) {
+		send(client, {
+			action: "join-team-failure",
+			payload: { message: "The team doesn't exist" }
+		});
+		return;
+	}
+
+	const player = game.getPlayerByWebSocket(client);
+	if (!player) {
+		send(client, {
+			action: "join-team-failure",
+			payload: { message: "You don't exist" }
+		});
+		return;
+	}
+
+	game.addPlayerToTeam(player, team);
+	game.sendGameState();
+}
+
+function startGame(client: WebSocket) {
+	const game = clientToLobby.get(client);
+
+	if (!game) return;
+
+	const error = game.start();
+	if (error) {
+		send(client, { action: "start-game-failure", payload: { message: error } });
+		return;
+	}
+
+	game.sendGameState();
 }
 
 function checkLobby(client: WebSocket, payload: { code: string }) {
@@ -151,22 +175,6 @@ function checkLobby(client: WebSocket, payload: { code: string }) {
 	send(client, {
 		action: "check-lobby-success",
 		payload: { code, exists: gameLobbies.has(code) }
-	});
-}
-
-function gameState(client: WebSocket) {
-	const game = clientToLobby.get(client);
-	if (!game) {
-		send(client, {
-			action: "game-state-failure",
-			payload: { message: "Vous n'êtes pas dans une partie" }
-		});
-
-		return;
-	}
-	send(client, {
-		action: "game-state-success",
-		payload: { gameState: game.toClientGameState() }
 	});
 }
 

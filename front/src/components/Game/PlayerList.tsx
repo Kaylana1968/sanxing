@@ -2,11 +2,15 @@ import type { Player } from "../../types";
 
 export default function PlayerList({ players }: { players: Player[] }) {
 	return (
-		<div className="grid grid-cols-2">
-			{players.map((player) => (
+		<div className="grid grid-cols-2 mt-2 border-t border-slate-300">
+			<div className="col-span-2 text-center border-b border-slate-300 py-1">
+				Joueurs
+			</div>
+
+			{players.map(player => (
 				<div
-					key={player.username}
-					className="odd:border-r not-last:not-nth-last-2:border-b border-slate-300 p-1 flex gap-2 items-center"
+					key={player.id}
+					className="even:border-r border-b border-slate-300 p-1 flex gap-2 items-center"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

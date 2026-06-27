@@ -13,21 +13,16 @@ export function areSameCards(card1: Card, card2: Card) {
 const cardValues: CardValue[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const cardColors: CardColor[] = ["spades", "hearts", "clubs", "diamonds"];
 
-function getDecks() {
-	const cards: Card[] = [];
-	for (let i = 0; i < 3; i++) {
-		cardValues.forEach(v =>
-			cardColors.forEach(c => cards.push({ value: v, color: c }))
-		);
-	}
-
-	return cards;
-}
+const threeDecks: Card[] = Array.from({ length: 3 }).flatMap(() => [
+	...cardValues.flatMap(v => cardColors.map(c => ({ value: v, color: c }))),
+	{ value: 14, color: "red" },
+	{ value: 14, color: "black" }
+]);
 
 function shuffle(array: Array<unknown>) {
 	let currentIndex = array.length;
 
-	while (currentIndex != 0) {
+	while (currentIndex > 1) {
 		let randomIndex = getRandomInt(currentIndex);
 		currentIndex--;
 
@@ -37,8 +32,6 @@ function shuffle(array: Array<unknown>) {
 		];
 	}
 }
-
-const threeDecks = getDecks();
 
 export function getShuffledCards() {
 	shuffle(threeDecks);
@@ -72,11 +65,11 @@ export function distributeCards(players: Player[], starter: Player | null) {
 	let cardIndex = 0;
 	let currentPlayer = starter;
 	do {
-		const cardsToAdd = cardsPerPlayer + additionalCards > 0 ? 1 : 0;
+		const cardsToAdd = cardsPerPlayer + (additionalCards > 0 ? 1 : 0);
 		additionalCards--;
 		currentPlayer.setCards(cards.slice(cardIndex, cardIndex + cardsToAdd));
 
 		cardIndex += cardsToAdd;
-		currentPlayer = starter.getNextPlayer()!;
+		currentPlayer = currentPlayer.getNextPlayer()!;
 	} while (currentPlayer !== starter);
 }

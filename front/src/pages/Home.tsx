@@ -4,6 +4,8 @@ import { useAppContext } from "../context/AppContext";
 import type { Data } from "../types";
 import { getNewWebsocket, localUsernameKey } from "../utils";
 
+const codeRegex = /^[a-zA-Z0-9]+$/;
+
 export default function Home() {
 	const [, navigate] = useLocation();
 	const [searchParams] = useSearchParams();
@@ -54,8 +56,8 @@ export default function Home() {
 		}
 		localStorage.setItem(localUsernameKey, username);
 
-		if (!code) {
-			setError("Vous avez oublié le code !");
+		if (!codeRegex.test(code)) {
+			setError("Le code est invalide");
 			return false;
 		}
 
@@ -81,7 +83,7 @@ export default function Home() {
 						placeholder="Ton nom"
 						maxLength={12}
 						value={username}
-						onChange={(e) => setUsername(e.target.value)}
+						onChange={e => setUsername(e.target.value)}
 						className="border rounded-md w-3/4 border-slate-400 text-slate-700 placeholder:text-slate-400 h-8 outline-none px-2 shadow-sm"
 					/>
 
@@ -90,7 +92,7 @@ export default function Home() {
 						placeholder="Code"
 						maxLength={4}
 						value={code}
-						onChange={(e) => setCode(e.target.value)}
+						onChange={e => setCode(e.target.value)}
 						className="border rounded-md w-1/4 border-slate-400 text-slate-700 placeholder:text-slate-400 h-8 outline-none text-center px-2 shadow-sm"
 					/>
 				</div>

@@ -1,6 +1,5 @@
 import { WebSocket } from "ws";
 import { Player } from "./Player.ts";
-import type { ClientGameState } from "../types.ts";
 import { Team } from "./Team.ts";
 import { distributeCards, getRandomInt, orderPlayers } from "../utils.ts";
 
@@ -32,14 +31,40 @@ export class Game {
 
 	public addPlayer(player: Player) {
 		this.players.push(player);
+
+		for (let i = 0; i < 3; i++) {
+			this.players.push(new Player(player.webSocket, player.username + i));
+		}
+
+		this.addPlayerToTeam(this.players[0], this.teams[0]);
+		this.addPlayerToTeam(this.players[1], this.teams[0]);
+		this.addPlayerToTeam(this.players[2], this.teams[1]);
+		this.addPlayerToTeam(this.players[3], this.teams[1]);
+	}
+
+	public getPlayerByWebSocket(webSocket: WebSocket) {
+		return this.players.find(p => p.webSocket === webSocket);
 	}
 
 	public removePlayer(webSocket: WebSocket) {
-		this.players.splice(this.players.findIndex(p => p.webSocket === webSocket));
+		const playerIndex = this.players.findIndex(p => p.webSocket === webSocket);
+
+		if (playerIndex === -1) return;
+
+		this.players.splice(playerIndex, 1);
+	}
+
+	public addPlayerToTeam(player: Player, team: Team) {
+		this.teams.forEach(t => t.removePlayer(player));
+		team.addPlayer(player);
 	}
 
 	public isEmpty() {
 		return this.players.length === 0;
+	}
+
+	public getTeamById(teamId: number) {
+		return this.teams.find(team => team.id === teamId);
 	}
 
 	public start() {
@@ -60,14 +85,24 @@ export class Game {
 		return;
 	}
 
-	public toClientGameState(): ClientGameState {
-		return {
-			code: this.code,
-			players: this.players.map(p => p.toClientOtherPlayer()),
-			teams: this.teams.map(t => t.toClientTeam()),
-			currentPlayer: this.currentPlayer?.toClientOtherPlayer() ?? null,
-			firstPlace: this.firstPlace?.toClientOtherPlayer() ?? null,
-			secondPlace: this.secondPlace?.toClientOtherPlayer() ?? null
-		};
+	public sendGameState() {
+		console.log("sending game state");
+		for (const player of this.players) {
+			player.send({
+				action: "game-state",
+				payload: {
+					gameState: {
+						code: this.code,
+						players: this.players.map(p =>
+							p === player ? p.toClientSelfPlayer() : p.toClientOtherPlayer()
+						),
+						teams: this.teams.map(t => t.toClientTeam()),
+						currentPlayer: this.currentPlayer?.toClientOtherPlayer() ?? null,
+						firstPlace: this.firstPlace?.toClientOtherPlayer() ?? null,
+						secondPlace: this.secondPlace?.toClientOtherPlayer() ?? null
+					}
+				}
+			});
+		}
 	}
 }
