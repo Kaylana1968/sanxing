@@ -6,11 +6,13 @@ export class Player {
 	public readonly webSocket: WebSocket;
 	public readonly username: string;
 	private cards: Card[];
+	private nextPlayer: Player | null;
 
 	constructor(webSocket: WebSocket, username: string) {
 		this.webSocket = webSocket;
 		this.username = username;
 		this.cards = [];
+		this.nextPlayer = null;
 	}
 
 	public hasCards(...cards: Card[]) {
@@ -25,11 +27,30 @@ export class Player {
 		this.cards = cards;
 	}
 
+	public getNextPlayer() {
+		return this.nextPlayer;
+	}
+
+	public setNextPlayer(nextPlayer: Player) {
+		this.nextPlayer = nextPlayer;
+	}
+
 	public toClientSelfPlayer(): ClientSelfPlayer {
-		return { username: this.username, cards: this.cards };
+		return {
+			username: this.username,
+			nextPlayer: this.nextPlayer
+				? { username: this.nextPlayer.username }
+				: null,
+			cards: this.cards
+		};
 	}
 
 	public toClientOtherPlayer(): ClientOtherPlayer {
-		return { username: this.username };
+		return {
+			username: this.username,
+			nextPlayer: this.nextPlayer
+				? { username: this.nextPlayer.username }
+				: null
+		};
 	}
 }

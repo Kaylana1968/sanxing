@@ -81,7 +81,7 @@ wss.on("connection", client => {
 
 		sendLobby(client, {
 			action: "game-state-success",
-			payload: { gameState: game.toOtherClientGameState() }
+			payload: { gameState: game.toClientGameState() }
 		});
 
 		clientToLobby.delete(client);
@@ -130,7 +130,7 @@ function joinLobby(
 
 	sendLobby(client, {
 		action: "join-lobby-success",
-		payload: { gameState: game.toOtherClientGameState() }
+		payload: { gameState: game.toClientGameState() }
 	});
 }
 
@@ -141,7 +141,7 @@ function exitLobby(client: WebSocket) {
 
 	sendLobby(client, {
 		action: "exit-lobby-success",
-		payload: { gameState: game.toOtherClientGameState() }
+		payload: { gameState: game.toClientGameState() }
 	});
 }
 
@@ -166,7 +166,7 @@ function gameState(client: WebSocket) {
 	}
 	send(client, {
 		action: "game-state-success",
-		payload: { gameState: game.toSelfClientGameState() }
+		payload: { gameState: game.toClientGameState() }
 	});
 }
 

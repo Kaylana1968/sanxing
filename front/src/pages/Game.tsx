@@ -3,7 +3,7 @@ import { useAppContext } from "../context/AppContext";
 import type { GameState, Data } from "../types";
 import PlayerList from "../components/Game/PlayerList";
 import Title from "../components/Game/Title";
-import { getNewWebsocket } from "../utils";
+import { getNewGameState, getNewWebsocket } from "../utils";
 import { useLocation } from "wouter";
 
 export default function Game({ code }: { code: string }) {
@@ -11,10 +11,7 @@ export default function Game({ code }: { code: string }) {
 
 	const { socketRef, username, sendData, setSnackbarMessage } = useAppContext();
 	const hasJoinedRef = useRef(false);
-	const [gameState, setGameState] = useState<GameState>({
-		players: [],
-		teams: []
-	});
+	const [gameState, setGameState] = useState<GameState>(getNewGameState(code));
 
 	const joinLobby = useCallback(() => {
 		if (hasJoinedRef.current) return;

@@ -18,21 +18,29 @@ export type Data =
 	| { action: "game-state-failure"; payload: { message: string } }
 	| { action: "play"; payload: unknown };
 
-export type CardColor = "spades" | "hearts" | "diamonds" | "clubs";
-export type Card = { value: number; color: CardColor };
+export type CardColor = "spades" | "hearts" | "clubs" | "diamonds";
+export type CardValue = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
+export type Card = { value: CardValue; color: CardColor };
 
-export type ClientSelfPlayer = { username: string; cards: Card[] };
-export type ClientOtherPlayer = { username: string };
+export type ClientSelfPlayer = ClientOtherPlayer & {
+	cards: Card[];
+};
+export type ClientOtherPlayer = {
+	username: string;
+	nextPlayer: { username: string } | null;
+};
 export type ClientPlayer = ClientSelfPlayer | ClientOtherPlayer;
 
-export type ClientSelfGameState = {
-	code: string;
-	players: ClientSelfPlayer[];
-	teams: [];
+export type ClientTeam = {
+	players: ClientPlayer[];
+	score: number;
 };
-export type ClientOtherGameState = {
+
+export type ClientGameState = {
 	code: string;
-	players: ClientOtherPlayer[];
-	teams: [];
+	players: ClientPlayer[];
+	teams: ClientTeam[];
+	currentPlayer: ClientPlayer | null;
+	firstPlace: ClientPlayer | null;
+	secondPlace: ClientPlayer | null;
 };
-export type ClientGameState = ClientSelfGameState | ClientOtherGameState;

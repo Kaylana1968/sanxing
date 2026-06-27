@@ -18,11 +18,21 @@ export type Data =
 	| { action: "game-state-success"; payload: { gameState: GameState } }
 	| { action: "play"; payload: unknown };
 
-export type CardColor = "spades" | "hearts" | "diamonds" | "clubs";
-export type Card = { value: number; color: CardColor };
-export type Player = { username: string; cards?: Card[] };
+export type CardColor = "spades" | "hearts" | "clubs" | "diamonds";
+export type CardValue = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
+export type Card = { value: CardValue; color: CardColor };
+
+export type Player = {
+	username: string;
+	cards?: Card[];
+	nextPlayer: { username: string } | null;
+};
 
 export type GameState = {
+	code: string;
 	players: Player[];
 	teams: [];
+	currentPlayer: Player | null;
+	firstPlace: Player | null;
+	secondPlace: Player | null;
 };
