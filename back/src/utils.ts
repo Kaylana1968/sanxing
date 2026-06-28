@@ -15,8 +15,8 @@ const cardColors: CardColor[] = ["spades", "hearts", "clubs", "diamonds"];
 
 const threeDecks: Card[] = Array.from({ length: 3 }).flatMap(() => [
 	...cardValues.flatMap(v => cardColors.map(c => ({ value: v, color: c }))),
-	{ value: 14, color: "red" },
-	{ value: 14, color: "black" }
+	{ value: 14, color: null },
+	{ value: 15, color: null }
 ]);
 
 function shuffle(array: Array<unknown>) {
