@@ -1,11 +1,13 @@
 import { createContext, useContext } from "react";
-import type { Data } from "../types";
+import type { Socket } from "socket.io-client";
+import type { ClientToServerEvents, ServerToClientEvents } from "../types";
 
 export const AppContext = createContext<{
-	socketRef: React.RefObject<WebSocket | null>;
+	socketRef: React.RefObject<
+		Socket<ServerToClientEvents, ClientToServerEvents>
+	>;
 	username: string;
 	setUsername: React.Dispatch<React.SetStateAction<string>>;
-	sendData: (data: Data) => void;
 	setSnackbarMessage: React.Dispatch<React.SetStateAction<string>>;
 } | null>(null);
 

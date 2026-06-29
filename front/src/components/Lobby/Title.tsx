@@ -1,6 +1,6 @@
 export default function Title({ code }: { code: string }) {
 	return (
-		<div className="p-2 text-center border-b border-b-slate-300 font-semibold text-lg">
+		<div className="bg-slate-200 rounded-full w-full p-2 text-center border border-slate-300 font-semibold text-lg shadow-lg">
 			Partie{" "}
 			<button
 				type="button"

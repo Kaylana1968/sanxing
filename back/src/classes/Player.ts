@@ -1,9 +1,8 @@
-import { WebSocket } from "ws";
 import type {
 	Card,
 	ClientOtherPlayer,
 	ClientSelfPlayer,
-	Data
+	ClientSocket
 } from "../types.ts";
 import { areSameCards } from "../utils.ts";
 
@@ -11,14 +10,14 @@ export class Player {
 	private static nextId = 1;
 
 	public readonly id: number;
-	public readonly webSocket: WebSocket;
+	public readonly socket: ClientSocket;
 	public readonly username: string;
 	private cards: Card[];
 	private nextPlayer: Player | null;
 
-	constructor(webSocket: WebSocket, username: string) {
+	constructor(socket: ClientSocket, username: string) {
 		this.id = Player.nextId++;
-		this.webSocket = webSocket;
+		this.socket = socket;
 		this.username = username;
 		this.cards = [];
 		this.nextPlayer = null;
@@ -42,10 +41,6 @@ export class Player {
 
 	public setNextPlayer(nextPlayer: Player) {
 		this.nextPlayer = nextPlayer;
-	}
-
-	public send(data: Data) {
-		this.webSocket.send(JSON.stringify(data));
 	}
 
 	public toClientSelfPlayer(): ClientSelfPlayer {

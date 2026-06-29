@@ -1,153 +1,124 @@
 import http from "http";
-import { WebSocket, WebSocketServer } from "ws";
-import type { Data } from "./types.ts";
 import { Game } from "./classes/Game.ts";
 import { Player } from "./classes/Player.ts";
+import { Server } from "socket.io";
+import type {
+	ClientSocket,
+	ClientToServerEvents,
+	InterServerEvents,
+	ServerToClientEvents,
+	SocketData
+} from "./types.ts";
 
 const PORT = 8000;
 
 const server = http.createServer((_req, res) => {
 	res.writeHead(200, { "Content-Type": "text/plain" });
-	res.end("Game Server WebSocket Transport Layer Only");
+	res.end("Game Server Socket Transport Layer Only");
 });
-const wss = new WebSocketServer({ server });
+const io = new Server<
+	ClientToServerEvents,
+	ServerToClientEvents,
+	InterServerEvents,
+	SocketData
+>(server, {
+	connectionStateRecovery: {},
+	cors: {
+		origin: "*"
+	}
+});
 
-function send(client: WebSocket, data: Data) {
-	client.send(JSON.stringify(data));
+const gameRooms = new Map<string, Game>();
 
-	console.log("send", data.action, data.payload);
-}
+io.on("connection", socket => {
+	socket.onAny(payload => console.log("received", payload));
+	socket.on("create-lobby", payload => createLobby(socket, payload));
+	socket.on("join-lobby", payload => joinLobby(socket, payload));
+	socket.on("exit-lobby", () => exitLobby(socket));
+	socket.on("check-lobby", payload => checkLobby(socket, payload));
+	socket.on("join-team", payload => joinTeam(socket, payload));
+	socket.on("start-game", () => startGame(socket));
 
-const clientToLobby = new Map<WebSocket, Game>();
-const gameLobbies = new Map<string, Game>();
-
-wss.on("connection", client => {
-	client.on("message", message => {
-		try {
-			const { action, payload }: Data = JSON.parse(message.toString());
-
-			console.log("receive", action, payload);
-
-			switch (action) {
-				case "create-lobby":
-					createLobby(client, payload);
-					break;
-
-				case "join-lobby":
-					joinLobby(client, payload);
-					break;
-
-				case "exit-lobby":
-					exitLobby(client);
-					break;
-
-				case "check-lobby":
-					checkLobby(client, payload);
-					break;
-
-				case "join-team":
-					joinTeam(client, payload);
-					break;
-
-				case "start-game":
-					startGame(client);
-					break;
-
-				default:
-					send(client, {
-						action: "error",
-						payload: { message: "Action inconnue" }
-					});
-					break;
-			}
-		} catch (e) {
-			console.error("Invalid network packet format.");
-		}
-	});
-
-	client.on("close", () => {
-		const game = removeFromGames(client);
+	socket.on("disconnect", () => {
+		const game = removeFromGames(socket);
 
 		if (!game) return;
 
 		game.sendGameState();
-
-		clientToLobby.delete(client);
 	});
 });
 
-function createLobby(client: WebSocket, payload: { code: string }) {
+function createLobby(socket: ClientSocket, payload: { code: string }) {
 	const { code } = payload;
 
-	if (gameLobbies.has(code)) {
-		send(client, {
-			action: "create-lobby-failure",
-			payload: { message: "Le code est déjà pris" }
-		});
+	if (io.sockets.adapter.rooms.has(code)) {
+		socket.emit("create-lobby-failure", { message: "Le code est déjà pris" });
 		return;
 	}
 
 	const game = new Game(code);
+	gameRooms.set(code, game);
 
-	gameLobbies.set(code, game);
-	clientToLobby.set(client, game);
-
-	send(client, {
-		action: "create-lobby-success",
-		payload: { code }
-	});
+	socket.emit("create-lobby-success", { code });
 }
 
 function joinLobby(
-	client: WebSocket,
+	socket: ClientSocket,
 	payload: { code: string; username: string }
 ) {
 	const { code, username } = payload;
 
-	const game = gameLobbies.get(code);
+	const game = gameRooms.get(code);
 	if (!game) {
-		send(client, {
-			action: "join-lobby-failure",
-			payload: { message: "La partie n'existe pas" }
-		});
+		socket.emit("join-lobby-failure", { message: "La partie n'existe pas" });
 		return;
 	}
 
-	game.addPlayer(new Player(client, username));
-	clientToLobby.set(client, game);
+	if (socket.rooms.has(code)) {
+		return;
+	}
+
+	socket.join(code);
+	socket.data.username = username;
+	socket.data.gameCode = code;
+	game.addPlayer(new Player(socket, username));
 
 	game.sendGameState();
 }
 
-function exitLobby(client: WebSocket) {
-	const game = removeFromGames(client);
+function exitLobby(socket: ClientSocket) {
+	const game = removeFromGames(socket);
 
 	if (!game) return;
 
 	game.sendGameState();
 }
 
-function joinTeam(client: WebSocket, payload: { teamId: number }) {
-	const game = clientToLobby.get(client);
+function joinTeam(socket: ClientSocket, payload: { teamId: number }) {
+	const code = socket.data.gameCode;
 
-	if (!game) return;
+	if (!code) {
+		socket.emit("join-team-failure", { message: "You are not in a game" });
+		return;
+	}
+
+	const game = gameRooms.get(code);
+
+	if (!game) {
+		socket.emit("join-team-failure", { message: "Your game doesn't exist" });
+		return;
+	}
 
 	const { teamId } = payload;
 	const team = game.getTeamById(teamId);
 	if (!team) {
-		send(client, {
-			action: "join-team-failure",
-			payload: { message: "The team doesn't exist" }
-		});
+		socket.emit("join-team-failure", { message: "The team doesn't exist" });
 		return;
 	}
 
-	const player = game.getPlayerByWebSocket(client);
+	const player = game.getPlayerBySocket(socket);
 	if (!player) {
-		send(client, {
-			action: "join-team-failure",
-			payload: { message: "You don't exist" }
-		});
+		socket.emit("join-team-failure", { message: "You don't exist" });
 		return;
 	}
 
@@ -155,39 +126,53 @@ function joinTeam(client: WebSocket, payload: { teamId: number }) {
 	game.sendGameState();
 }
 
-function startGame(client: WebSocket) {
-	const game = clientToLobby.get(client);
+function startGame(socket: ClientSocket) {
+	const code = socket.data.gameCode;
 
-	if (!game) return;
+	if (!code) {
+		socket.emit("start-game-failure", { message: "You are not in a game" });
+		return;
+	}
+
+	const game = gameRooms.get(code);
+
+	if (!game) {
+		socket.emit("start-game-failure", { message: "Your game doesn't exist" });
+		return;
+	}
 
 	const error = game.start();
 	if (error) {
-		send(client, { action: "start-game-failure", payload: { message: error } });
+		socket.emit("start-game-failure", { message: error });
 		return;
 	}
 
 	game.sendGameState();
 }
 
-function checkLobby(client: WebSocket, payload: { code: string }) {
+function checkLobby(socket: ClientSocket, payload: { code: string }) {
 	const { code } = payload;
 
-	send(client, {
-		action: "check-lobby-success",
-		payload: { code, exists: gameLobbies.has(code) }
-	});
+	socket.emit("check-lobby-success", { code, exists: gameRooms.has(code) });
 }
 
-function removeFromGames(client: WebSocket) {
-	const game = clientToLobby.get(client);
+function removeFromGames(socket: ClientSocket) {
+	const code = socket.data.gameCode;
+
+	if (!code) return;
+
+	const game = gameRooms.get(code);
 
 	if (!game) return;
 
-	game.removePlayer(client);
+	socket.leave(code);
+	delete socket.data.gameCode;
+	game.removePlayer(socket);
 
-	if (game.isEmpty()) {
-		gameLobbies.delete(game.code);
-		return;
+	const playersInRoom = io.sockets.adapter.rooms.get(game.code)?.size ?? 0;
+
+	if (playersInRoom === 0) {
+		gameRooms.delete(game.code);
 	}
 
 	return game;

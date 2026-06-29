@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useSearchParams } from "wouter";
 import { useAppContext } from "../context/AppContext";
-import type { Data } from "../types";
-import { getNewWebsocket, localUsernameKey } from "../utils";
+import { localUsernameKey } from "../utils";
 
 const codeRegex = /^[a-zA-Z0-9]+$/;
 
@@ -10,42 +9,28 @@ export default function Home() {
 	const [, navigate] = useLocation();
 	const [searchParams] = useSearchParams();
 
-	const { socketRef, username, setUsername, sendData } = useAppContext();
+	const { socketRef, username, setUsername } = useAppContext();
 
 	const [code, setCode] = useState(searchParams.get("code") ?? "");
 	const [error, setError] = useState("");
 
 	useEffect(() => {
-		if (!socketRef.current) socketRef.current = getNewWebsocket();
-
 		const socket = socketRef.current;
 
-		function handleMessage(e: MessageEvent) {
-			const { action, payload }: Data = JSON.parse(e.data);
-
-			switch (action) {
-				case "create-lobby-success":
-					navigate(`/game/${payload.code}`);
-					break;
-
-				case "create-lobby-failure":
-					setError("Une partie avec ce code existe déjà");
-					break;
-
-				case "check-lobby-success":
-					if (payload.exists) navigate(`/game/${payload.code}`);
-					else setError("Le code ne correspond à aucune partie");
-					break;
-
-				default:
-					break;
-			}
-		}
-
-		socket.addEventListener("message", handleMessage);
+		socket.on("create-lobby-success", ({ code }) => navigate(`/lobby/${code}`));
+		socket.on("create-lobby-failure", () =>
+			setError("Une partie avec ce code existe déjà")
+		);
+		socket.on("check-lobby-success", ({ exists, code }) =>
+			exists
+				? navigate(`/lobby/${code}`)
+				: setError("Le code ne correspond à aucune partie")
+		);
 
 		return () => {
-			socket.removeEventListener("message", handleMessage);
+			socket.off("create-lobby-success");
+			socket.off("create-lobby-failure");
+			socket.off("check-lobby-success");
 		};
 	}, [socketRef, navigate]);
 
@@ -65,13 +50,9 @@ export default function Home() {
 	}
 
 	function handleClick(action: "create-lobby" | "check-lobby") {
-		return (e: React.MouseEvent) => {
-			e.preventDefault();
+		if (!validateFields()) return;
 
-			if (!validateFields()) return;
-
-			sendData({ action, payload: { code } });
-		};
+		socketRef.current?.emit(action, { code });
 	}
 
 	return (
@@ -101,7 +82,7 @@ export default function Home() {
 
 				<button
 					type="button"
-					onClick={handleClick("create-lobby")}
+					onClick={() => handleClick("create-lobby")}
 					className="rounded-md mt-2 col-span-2 bg-amber-600 text-white text-base px-4 py-2 cursor-pointer shadow-lg"
 				>
 					Créer une partie
@@ -109,7 +90,7 @@ export default function Home() {
 
 				<button
 					type="button"
-					onClick={handleClick("check-lobby")}
+					onClick={() => handleClick("check-lobby")}
 					className="rounded-md col-span-2 bg-emerald-600 text-white text-base px-4 py-2 cursor-pointer shadow-lg"
 				>
 					Rejoindre avec un code

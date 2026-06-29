@@ -2,6 +2,7 @@ import Game from "./pages/Game";
 import Home from "./pages/Home";
 import { AppContextProvider } from "./context/AppContextProvider";
 import { Route, Switch } from "wouter";
+import Lobby from "./pages/Lobby";
 
 function App() {
 	return (
@@ -10,6 +11,10 @@ function App() {
 				<Switch>
 					<Route path="/">
 						<Home />
+					</Route>
+
+					<Route path="/lobby/:code">
+						{({ code }) => <Lobby code={code} />}
 					</Route>
 
 					<Route path="/game/:code">{({ code }) => <Game code={code} />}</Route>
