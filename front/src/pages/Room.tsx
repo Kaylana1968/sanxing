@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import type { GameState } from "../types";
-import PlayerList from "../components/Lobby/PlayerList";
-import Title from "../components/Lobby/Title";
-import { getNewGameState } from "../utils";
+import { getNewGameState, State } from "../utils";
 import { useLocation } from "wouter";
-import StartButton from "../components/Lobby/StartButton";
-import TeamList from "../components/Lobby/TeamList";
+import Lobby from "../components/Lobby";
+import Game from "../components/Game";
 
-export default function Lobby({ code }: { code: string }) {
+export default function Room({ code }: { code: string }) {
 	const [, navigate] = useLocation();
 
 	const { socketRef, username, setSnackbarMessage } = useAppContext();
@@ -44,16 +42,9 @@ export default function Lobby({ code }: { code: string }) {
 		};
 	}, [navigate, username, setSnackbarMessage, socketRef, code]);
 
-	return (
-		<>
-			<div className="flex flex-col items-center gap-2">
-				<Title code={code} />
-
-				<PlayerList players={gameState.players} />
-				<TeamList teams={gameState.teams} />
-			</div>
-
-			<StartButton />
-		</>
+	return gameState.state === State.LOBBYING ? (
+		<Lobby gameState={gameState} />
+	) : (
+		<Game gameState={gameState} />
 	);
 }

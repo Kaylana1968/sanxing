@@ -42,7 +42,8 @@ export class Game {
 
 		if (playerIndex === -1) return;
 
-		this.players.splice(playerIndex, 1);
+		const player = this.players.splice(playerIndex, 1)[0];
+		this.teams.forEach(t => t.removePlayer(player));
 	}
 
 	public addPlayerToTeam(player: Player, team: Team) {
@@ -62,8 +63,10 @@ export class Game {
 	public start() {
 		if (!this.teams[0].isSameSize(this.teams[1]))
 			return "Les équipes ne sont pas de la même taille";
+
 		if (!this.teams[0].hasEnoughPlayers())
 			return "Il faut au moins 2 joueurs par équipe";
+
 		if (this.state === Game.PLAYING) return "La partie a déjà commencé";
 
 		const allPlayers = orderPlayers(this.teams[0], this.teams[1]);
@@ -87,6 +90,7 @@ export class Game {
 						p === player ? p.toClientSelfPlayer() : p.toClientOtherPlayer()
 					),
 					teams: this.teams.map(t => t.toClientTeam()),
+					state: this.state,
 					currentPlayer: this.currentPlayer?.toClientOtherPlayer() ?? null,
 					firstPlace: this.firstPlace?.toClientOtherPlayer() ?? null,
 					secondPlace: this.secondPlace?.toClientOtherPlayer() ?? null

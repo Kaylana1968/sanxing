@@ -4,7 +4,7 @@ import { AppContext } from "./AppContext";
 import { localUsernameKey } from "../utils";
 import { io } from "socket.io-client";
 
-const URL = "http://localhost:8000";
+const URL = "http://10.127.5.67:8000";
 
 export function AppContextProvider({
 	children

@@ -17,13 +17,13 @@ export default function Home() {
 	useEffect(() => {
 		const socket = socketRef.current;
 
-		socket.on("create-lobby-success", ({ code }) => navigate(`/lobby/${code}`));
+		socket.on("create-lobby-success", ({ code }) => navigate(`/room/${code}`));
 		socket.on("create-lobby-failure", () =>
 			setError("Une partie avec ce code existe déjà")
 		);
 		socket.on("check-lobby-success", ({ exists, code }) =>
 			exists
-				? navigate(`/lobby/${code}`)
+				? navigate(`/room/${code}`)
 				: setError("Le code ne correspond à aucune partie")
 		);
 

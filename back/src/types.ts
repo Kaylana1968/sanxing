@@ -59,6 +59,7 @@ export type ClientGameState = {
 	code: string;
 	players: ClientPlayer[];
 	teams: ClientTeam[];
+	state: 0 | 1;
 	currentPlayer: ClientPlayer | null;
 	firstPlace: ClientPlayer | null;
 	secondPlace: ClientPlayer | null;

@@ -11,7 +11,7 @@ export default function StartButton() {
 		<button
 			type="button"
 			onClick={handleClick}
-			className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-linear-to-br from-teal-500 to-teal-700 text-white text-2xl px-8 py-3 rounded-full shadow-lg/30"
+			className="fixed bottom-4 left-1/2 -translate-x-1/2 cursor-pointer bg-linear-to-br from-amber-400 to-red-500 text-white text-2xl px-8 py-3 rounded-full shadow-lg/30"
 		>
 			Jouer
 		</button>

@@ -40,6 +40,7 @@ export type GameState = {
 	code: string;
 	players: Player[];
 	teams: Team[];
+	state: 0 | 1;
 	currentPlayer: Player | null;
 	firstPlace: Player | null;
 	secondPlace: Player | null;

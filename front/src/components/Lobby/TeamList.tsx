@@ -29,7 +29,7 @@ export default function TeamList({ teams }: { teams: Team[] }) {
 					</div>
 					{team.players.map((player, index) => (
 						<div
-							key={player.username}
+							key={player.id}
 							className={`border-slate-300 px-2 py-1 flex gap-1 items-center ${maxPlayersInEquipe > index + 1 ? "border-b" : ""}`}
 						>
 							<svg
@@ -39,9 +39,9 @@ export default function TeamList({ teams }: { teams: Team[] }) {
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
 							>
 								<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
 								<path d="M16 3.128a4 4 0 0 1 0 7.744" />
