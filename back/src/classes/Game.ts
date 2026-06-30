@@ -46,6 +46,11 @@ export class Game {
 	}
 
 	public addPlayerToTeam(player: Player, team: Team) {
+		if (team.getPlayers().includes(player)) {
+			team.removePlayer(player);
+			return;
+		}
+
 		this.teams.forEach(t => t.removePlayer(player));
 		team.addPlayer(player);
 	}

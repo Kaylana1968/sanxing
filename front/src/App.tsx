@@ -1,4 +1,3 @@
-import Game from "./pages/Game";
 import Home from "./pages/Home";
 import { AppContextProvider } from "./context/AppContextProvider";
 import { Route, Switch } from "wouter";
@@ -16,8 +15,6 @@ function App() {
 					<Route path="/lobby/:code">
 						{({ code }) => <Lobby code={code} />}
 					</Route>
-
-					<Route path="/game/:code">{({ code }) => <Game code={code} />}</Route>
 
 					<Route>
 						<div>T'es allé où ?</div>

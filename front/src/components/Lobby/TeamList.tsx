@@ -8,6 +8,8 @@ export default function TeamList({ teams }: { teams: Team[] }) {
 		return () => socketRef.current.emit("join-team", { teamId });
 	}
 
+	const maxPlayersInEquipe = Math.max(...teams.map(t => t.players.length));
+
 	return (
 		<div className="grid grid-cols-2 rounded-2xl border border-slate-300 bg-slate-200 w-full shadow-lg">
 			<div className="col-span-2 text-center text-base font-semibold border-b border-slate-300 py-1">
@@ -18,15 +20,17 @@ export default function TeamList({ teams }: { teams: Team[] }) {
 				<div
 					key={team.id}
 					onClick={handleClick(team.id)}
-					className="grid grid-cols-subgrid even:border-r border-slate-300"
+					className="grid grid-cols-subgrid content-start even:border-r border-slate-300"
 				>
-					<div className="text-center not-last:border-b border-slate-300 h-min py-1">
+					<div
+						className={`text-center border-slate-300 py-1 ${maxPlayersInEquipe > 0 ? "border-b" : ""}`}
+					>
 						Team {index + 1}
 					</div>
-					{team.players.map(player => (
+					{team.players.map((player, index) => (
 						<div
 							key={player.username}
-							className="not-last:border-b border-slate-300 px-2 py-1 flex gap-1 items-center"
+							className={`border-slate-300 px-2 py-1 flex gap-1 items-center ${maxPlayersInEquipe > index + 1 ? "border-b" : ""}`}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
