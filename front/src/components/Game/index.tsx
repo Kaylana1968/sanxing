@@ -12,7 +12,7 @@ export default function Game({ gameState }: { gameState: GameState }) {
 		if (!ctx) return;
 
 		const img = new Image();
-		img.src = "/images/cards/13c.png";
+		img.src = "/images/cards/back.webp";
 
 		const resizeAndDraw = () => {
 			canvas.width = window.innerWidth;
